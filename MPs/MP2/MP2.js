@@ -32,7 +32,8 @@ var kAmbient = [227/255, 191/255, 76/255];
 /** @global Diffuse material color/intensity for Phong reflection */
 var kDiffuse = [227/255, 191/255, 76/255];
 /** @global Specular material color/intensity for Phong reflection */
-var kSpecular = [227/255, 191/255, 76/255];
+// var kSpecular = [227/255, 191/255, 76/255];
+var kSpecular = [1.0, 1.0, 1.0, 1.0];
 /** @global Shininess exponent for Phong reflection */
 var shininess = 2;
 
@@ -75,7 +76,7 @@ function startup() {
   setupShaders();
 
   // Let the Terrain object set up its own buffers.
-  myTerrain = new Terrain(100, -1, 1, -1, 1);
+  myTerrain = new Terrain(125, -1, 1, -1, 1);
 
   myTerrain.setupBuffers(shaderProgram);
 
@@ -175,6 +176,11 @@ function setupShaders() {
   shaderProgram.locations.normalMatrix =
     gl.getUniformLocation(shaderProgram, "normalMatrix");
 
+  shaderProgram.locations.minElevation =
+    gl.getUniformLocation(shaderProgram, "minElevation");
+  shaderProgram.locations.maxElevation =
+    gl.getUniformLocation(shaderProgram, "maxElevation");
+
   shaderProgram.locations.kAmbient =
     gl.getUniformLocation(shaderProgram, "kAmbient");
   shaderProgram.locations.kDiffuse =
@@ -222,10 +228,12 @@ function draw() {
   
   // Draw the triangles, the wireframe, or both, based on the render selection.
   if (document.getElementById("polygon").checked) { 
+    setElevationUniforms()
     setMaterialUniforms(kAmbient, kDiffuse, kSpecular, shininess);
     myTerrain.drawTriangles();
   }
   else if (document.getElementById("wirepoly").checked) {
+    setElevationUniforms()
     setMaterialUniforms(kAmbient, kDiffuse, kSpecular, shininess); 
     gl.enable(gl.POLYGON_OFFSET_FILL);
     gl.polygonOffset(1, 1);
@@ -260,6 +268,13 @@ function setMatrixUniforms() {
                       normalMatrix);
 }
 
+/**
+ * Sends min and max elevation properties to the shader program.
+ */
+function setElevationUniforms() {
+  gl.uniform1f(shaderProgram.locations.minElevation, myTerrain.getMinElevation());
+  gl.uniform1f(shaderProgram.locations.maxElevation, myTerrain.getMaxElevation());
+}
 
 /**
  * Sends material properties to the shader program.

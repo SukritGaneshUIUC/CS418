@@ -90,7 +90,7 @@ function magnitude(v) {
  */
 function unitVector(v) {
     var mag = magnitude(v);
-    var uv = scale(v, mag);
+    var uv = scale(v, 1 / mag);
     return uv;
 }
 
@@ -236,7 +236,7 @@ class Terrain {
      * @param {number} R Terrain generation hyperparameter for eeighted displacements
      * @param {number} H Terrain generation hyperparameter for faulting parameter difference
      */
-    constructor(div, minX, maxX, minY, maxY, PASSES=150, DELTA=0.01, R=0.25, H=0.001) {
+    constructor(div, minX, maxX, minY, maxY, PASSES=300, DELTA=0.012, R=0.3, H=0.005) {
         this.div = div;
         this.minX = minX;
         this.minY = minY;
@@ -410,7 +410,7 @@ class Terrain {
         // Vector to store normal vectors
         var normals = [];
         for (var i = 0; i < this.numVertices; i++) {
-            normals.push(0);
+            normals.push([0,0,0]);
         }
 
         // Iterate over all triangles
@@ -430,7 +430,7 @@ class Terrain {
             var vec1 = subArr(v1,v0);
             var vec2 = subArr(v2,v0);
             var normal = crossProduct(vec1, vec2);
-            var scaledNormal = scale(normal, 0.5);
+            var scaledNormal = scale(normal, 0.5 * magnitude(normal));
 
             // Add the normal vector to the cumulative normals of v0, v1, and v2
             normals[v0_idx] = addArr(normals[v0_idx], scaledNormal);
@@ -443,7 +443,35 @@ class Terrain {
             normals[i] = unitVector(normals[i]);
         }
 
-        this.normalData = normals;
+        // Add normals to normalData
+        this.normalData = [];
+        for (var i = 0; i < normals.length; i++) {
+            this.normalData = this.normalData.concat(normals[i]);
+        }
+    }
+
+    getMinElevation() {
+        var minZ = this.positionData[2];
+        for (var i = 0; i < this.numVertices; i++) {
+            var currVertex = [0,0,0];
+            this.getVertex(currVertex, i);
+            if (currVertex[2] < minZ) {
+                minZ = currVertex[2];
+            }
+        }
+        return minZ;
+    }
+
+    getMaxElevation() {
+        var maxZ = this.positionData[2];
+        for (var i = 0; i < this.numVertices; i++) {
+            var currVertex = [0,0,0];
+            this.getVertex(currVertex, i);
+            if (currVertex[2] > maxZ) {
+                maxZ = currVertex[2];
+            }
+        }
+        return maxZ;
     }
 
 
